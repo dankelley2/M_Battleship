@@ -123,7 +123,6 @@ namespace Battleship
         private void SendShot(Player P, int index)
         {
             remote.SendData(P.address, index.ToString(), "S");
-            remote.SendData(remote.CList.GetAllClientIPs(), "Shot fired on " + P.Name + "!","M");
             Console.WriteLine("Shot fired on " + P.Name + "!");
         }
         private void SendIntroduction(string IP)
@@ -212,19 +211,27 @@ namespace Battleship
                     string[] shot = message.Data.Split(';');
                     Player P = Player.GetPlayerByAddress(shot[0]);
                     int target = Convert.ToInt16(shot[1]);
-                    remote.SendData(remote.CList.GetAllClientIPs(),P.Name + " has been fired upon!","M");
+                    remote.SendData(remote.CList.GetAllClientIPs(), "Shot fired on " + P.Name + "!", "M");
                     if (Convert.ToBoolean(shot[2]) == true)
                     {
                         remote.SendData(remote.CList.GetAllClientIPs(), "It's a Hit","M");
                         Console.WriteLine("It's a Hit");
 
                         P.gameBoard.SetGamePieceState(P.gameBoard.GetPieceAtIndex(target), 3);
+                        if (IsHost)
+                        {
+                            SetupTurn(true);
+                        }
                     }
                     if (Convert.ToBoolean(shot[2]) == false)
                     {
                         remote.SendData(remote.CList.GetAllClientIPs(), "It was a doozy", "M");
                         Console.WriteLine("It was a doozy");
                         P.gameBoard.SetGamePieceState(P.gameBoard.GetPieceAtIndex(target), 1);
+                        if (IsHost)
+                        {
+                            SetupTurn(false);
+                        }
                     }
                     Refresh();
                 }
@@ -235,11 +242,19 @@ namespace Battleship
                     {
                         MyBoard.SetGamePieceState(MyBoard.GetPieceAtIndex(target), 1);
                         SendHitMiss(target, false);
+                        if (IsHost)
+                        {
+                            SetupTurn(false);
+                        }
                     }
                     else if (MyBoard.GetGamePieceState(target) == 2) // Hit!
                     {
                         MyBoard.SetGamePieceState(MyBoard.GetPieceAtIndex(target), 3);
                         SendHitMiss(target, true);
+                        if (IsHost)
+                        {
+                            SetupTurn(true);
+                        }
                     }
                     Refresh();
                 }
@@ -328,7 +343,7 @@ namespace Battleship
                 case 1: { SetupGame(); break; }
                 case 2: { PlaceShips(false); break; }
                 case 4: { CreateEnemyGrids(); break; }
-                case 5: { SetupTurn(); break; }
+                case 5: { SetupTurn(false); break; }
                 //case 6: { PlayTurn(); break; }
             }
 
@@ -580,22 +595,18 @@ namespace Battleship
             PlayGame();
         }
 
-        public void SetupTurn()
+        public void SetupTurn(bool SamePlayer)
         {
             if (IsHost)
             {
-                CurrentPlayer = GetNextPlayer();
+                if (!(SamePlayer))
+                {
+                    CurrentPlayer = GetNextPlayer();
+                }
                 SendChangeTurn(CurrentPlayer);
                 AnnounceNextPlayer(CurrentPlayer);
             }
-            gamePart += 1;
-            PlayGame();
-        }
-
-        public void ShotTaken()
-        {
-            
-            gamePart -= 1;
+            gamePart = 6;
             PlayGame();
         }
 
@@ -723,6 +734,11 @@ namespace Battleship
                                 {
                                     SendShot(P, target); // send a shot
                                 }
+                            }
+                            else if (!(P.gameBoard.origin.Equals(new PointF(370, 20))) && P.gameBoard.currentArea.Contains(CursorPos)) //clicked smaller board
+                            {
+                                Player.MakeActiveBoard(P);
+                                Refresh();
                             }
                         }
                     }

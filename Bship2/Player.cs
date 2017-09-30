@@ -47,6 +47,18 @@ namespace Battleship
             return null;
         }
 
+        public static void MakeActiveBoard(Player P)
+        {
+            PointF OldLocation = Player.PlayerLocations[P];
+            Player OldActivePlayer = Player.PlayerLocations.FirstOrDefault(x => (new PointF(370, 20).Equals(x.Value))).Key;
+            Player.PlayerLocations.Remove(P);
+            Player.PlayerLocations.Remove(OldActivePlayer);
+            Player.PlayerLocations.Add(OldActivePlayer, OldLocation);
+            Player.PlayerLocations.Add(P, new PointF(370, 20));
+            P.gameBoard.MoveTo(Player.PlayerLocations[P], Player.LocationScales[Player.PlayerLocations[P]]);
+            OldActivePlayer.gameBoard.MoveTo(Player.PlayerLocations[OldActivePlayer], Player.LocationScales[Player.PlayerLocations[OldActivePlayer]]);
+        }
+
         public static Player AddPlayer(string address, string name)
         {
             Player P = new Player(address, name);
