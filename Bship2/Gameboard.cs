@@ -67,16 +67,16 @@ namespace Battleship
             this.backColor = backColor;
 
             this.stateColors.Add(backColor);
-            this.stateColors.Add(Color.White);
+            this.stateColors.Add(Color.Black);
             this.stateColors.Add(Color.Gray);
             this.stateColors.Add(Color.DarkRed);
-            this.stateColors.Add(Color.Black);
+            this.stateColors.Add(Color.White);
 
             for (int i = 0; i < 101; i++)
             {
                 pieces.Add(new GamePiece(i));
-                pieces[i].state = 0;
-                pieces[i].drawstate = 0;
+                pieces[i].drawState = 0;
+                pieces[i].boardPiece = 0;
             }
             rectRedraw(this.origin, this.scale);
 
@@ -103,26 +103,26 @@ namespace Battleship
 
         public Color GetGamePieceColor(int index)
         {
-            return stateColors[GetPieceAtIndex(index).state];
+            return stateColors[GetPieceAtIndex(index).drawState];
         }
 
         public int GetGamePieceState(int index)
         {
-            return GetPieceAtIndex(index).state;
+            return GetPieceAtIndex(index).drawState;
         }
 
         public void SetGamePieceState(List<GamePiece> GPList, int state)
         {
             foreach (GamePiece GP in GPList)
             {
-                GP.state = state;
+                GP.drawState = state;
             }
         }
 
 
         public void SetGamePieceState(GamePiece GP, int state)
         {
-            GP.state = state;
+            GP.drawState = state;
         }
 
         public List<GamePiece> Get_AbovePieces(GamePiece G, int dist)
@@ -210,8 +210,9 @@ namespace Battleship
         public class GamePiece
         {
             public int idex { get; }
-            public int state { get; set; }
-            public int drawstate { get; set; }
+            public int drawState { get; set; }
+            public int boardPiece { get; set; }
+            public int pieceDirection { get; set; }
             public GamePiece(int idex)
             {
                 this.idex = idex;

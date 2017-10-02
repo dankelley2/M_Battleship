@@ -10,8 +10,9 @@ namespace Battleship
     {
         public class Shot
         {
+            public Player source;
             public Player target;
-            public int coords;
+            public int index;
             public bool success;
         }
     }
