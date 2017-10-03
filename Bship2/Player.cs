@@ -14,10 +14,12 @@ namespace Battleship
             new Dictionary<Player, PointF>();
         public static Dictionary<PointF, float> LocationScales = 
             new Dictionary<PointF, float>();
-        public List<Data.Shot> shots = new List<Data.Shot>();
+        public List<Shot> shots = new List<Shot>();
         public string address { get; }
         public string Name { get; }
         public int Id;
+        public bool Loser = false;
+        public bool ReadyToPlay = false;
         public Gameboard gameBoard { get; set; }
 
         public Player(string address, string name)
@@ -68,6 +70,56 @@ namespace Battleship
         public static IEnumerable<Player> GetAllPlayersExcept(string IP)
         {
             return Playerlist.Where(s => s.address != IP);
+        }
+
+        public static List<string> GetAllPlayerIPs()
+        {
+            return Playerlist.Select(s => s.address).ToList();
+        }
+
+        public static List<string> GetAllPlayerIPsExcept(string IP)
+        {
+            return Playerlist.Select(s => s.address)
+                .Where(s => s != IP).ToList();
+        }
+
+        public static Player CheckLosers()
+        {
+            foreach (Player P in Playerlist)
+            {
+                int CountShipPieces = 0;
+                foreach (Gameboard.GamePiece G in P.gameBoard.pieces)
+                {
+                    if (G.drawState == 2)
+                    {
+                        CountShipPieces++;
+                    }
+                }
+                if (CountShipPieces == 0)
+                {
+                    P.Loser = true;
+                    return P;
+                }
+            }
+            return null;
+        }
+
+        public static bool IsEveryoneReadyToPlay()
+        {
+            foreach (Player P in Playerlist)
+            {
+                if (P.ReadyToPlay == false)
+                    return false;
+            }
+            return true;
+        }
+
+        public bool Equals(Player P2)
+        {
+            if (this.address == P2.address)
+                return true;
+            else
+                return false;
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using tcpNet;
@@ -17,6 +18,7 @@ namespace Battleship
         //Game Components
         public int gamePart = 1; //setup
         public int firstReady = 1;
+        public Player MyPlayer;
         public Gameboard MyBoard;
         static Queue<Region> RenderQueue = new Queue<Region>();
         public bool gameready = false;
@@ -25,7 +27,7 @@ namespace Battleship
         public int underCursor;
         public Rectangle CursorRect = new Rectangle();
         public Queue<Color> ColorQueue = new Queue<Color>();
-        //public object PlayerOneSpot = new {point = new PointF(20,20),}
+        public int Ammo = 0;
 
         //Setup
         public Queue<int> ShipSetupQueue = new Queue<int>(5);
@@ -69,7 +71,7 @@ namespace Battleship
             // Redirect the out Console stream
             Console.SetOut(_writer);
             this.CheckTcpListener = new System.Windows.Forms.Timer();
-            this.CheckTcpListener.Interval = (500);
+            this.CheckTcpListener.Interval = (300);
             this.CheckTcpListener.Tick+=(CheckTcpListener_Tick);
 
             this.CheckReadyTimer = new System.Windows.Forms.Timer();
@@ -80,13 +82,14 @@ namespace Battleship
             this.server = new tcpNetwork.Listener(this.CheckTcpListener, 8888, 2048);
             this.MyIPAddress = tcpNetwork.GetMyIP().ToString();
             this.Text = "Battleship -- " + MyIPAddress;
+            this.MyPlayer = Player.AddPlayer(MyIPAddress, HostName); //Add Player
             PlayGame();
         }
         
         //CLEAN UP ON CLOSING
         private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
-            remote.SendData(remote.CList.GetAllClientIPs(), "", "D");
+            remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), "", "D");
             this.CheckTcpListener.Dispose();
             this.server.Close();
         }
@@ -105,10 +108,10 @@ namespace Battleship
             {
                 return;
             }
-            else if (remote.CList.GetAllClientIPs().Count != 0)
+            else if (Player.GetAllPlayerIPsExcept(MyIPAddress).Count != 0)
             {
                 Console.WriteLine("You: {0}", this.txtMsg.Text);
-                remote.SendData(remote.CList.GetAllClientIPs(), this.txtMsg.Text, "M");
+                remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), this.txtMsg.Text, "M");
                 this.txtMsg.Clear();
             }
             else
@@ -118,7 +121,7 @@ namespace Battleship
         }
         private void SendHitMiss(int target, bool HitMiss)
         {
-                remote.SendData(remote.CList.GetAllClientIPs(), MyIPAddress + ";" + target + ";" + HitMiss, "SR");
+                remote.SendData(Player.GetAllPlayerIPs(), MyIPAddress + ";" + target + ";" + HitMiss, "SR");
         }
         private void SendShot(Player P, int index)
         {
@@ -135,7 +138,7 @@ namespace Battleship
         }
         private void AskReady()
         {
-            remote.SendData(remote.CList.GetAllClientIPs(), "R", "B");
+            remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), "R", "B");
         }
         private void ReadyOrNot(string IP)
         {
@@ -144,7 +147,7 @@ namespace Battleship
 
         private void SendChangeTurn(Player CPlayer)
         {
-            remote.SendData(remote.CList.GetAllClientIPs(), CPlayer.address , "CT");
+            remote.SendData(Player.GetAllPlayerIPs(), CPlayer.address , "CT");
         }
 
         //CHECK FOR NEW MESSAGES
@@ -174,16 +177,16 @@ namespace Battleship
                     if (IsHost)
                     {
                         //Send Everyone an introduciton
-                        remote.SendData(remote.CList.GetAllClientIPs(), message.Data , "I");
+                        remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), message.Data , "I");
                     }
-                    remote.CList.AddNewClient(newClient[1], newClient[0]);
+                    Player.AddPlayer(newClient[1], newClient[0]);
                     ShareMyContact(newClient[1]); //Introduction
                     Console.WriteLine("Welcome {0}!", newClient[0]);
                 }
                 else if (message.Type == "SC") //Shared Contact
                 {
                     string[] newClient = message.Data.Split(';');
-                    remote.CList.AddNewClient(newClient[1], newClient[0]);
+                    Player.AddPlayer(newClient[1], newClient[0]);
                     Console.WriteLine("Welcome {0}!", newClient[0]);
                 }
                 else if (message.Type == "B") //Broadcast
@@ -203,37 +206,8 @@ namespace Battleship
                     if (IsHost)
                     {
                         string clientresponse = message.Data.ToLower();
-                        remote.CList.GetClientByIP(message.Sender).ClientAttr[0] = Convert.ToBoolean(clientresponse);
+                        Player.GetPlayerByAddress(message.Sender).ReadyToPlay = Convert.ToBoolean(clientresponse);
                     }
-                }
-                else if (message.Type == "SR") //Shot Response
-                {
-                    string[] shot = message.Data.Split(';');
-                    Player P = Player.GetPlayerByAddress(shot[0]);
-                    int target = Convert.ToInt16(shot[1]);
-                    remote.SendData(remote.CList.GetAllClientIPs(), "Shot fired on " + P.Name + "!", "M");
-                    if (Convert.ToBoolean(shot[2]) == true)
-                    {
-                        remote.SendData(remote.CList.GetAllClientIPs(), "It's a Hit","M");
-                        Console.WriteLine("It's a Hit");
-
-                        P.gameBoard.SetGamePieceState(P.gameBoard.GetPieceAtIndex(target), 3);
-                        if (IsHost)
-                        {
-                            SetupTurn(true);
-                        }
-                    }
-                    if (Convert.ToBoolean(shot[2]) == false)
-                    {
-                        remote.SendData(remote.CList.GetAllClientIPs(), "It was a doozy", "M");
-                        Console.WriteLine("It was a doozy");
-                        P.gameBoard.SetGamePieceState(P.gameBoard.GetPieceAtIndex(target), 1);
-                        if (IsHost)
-                        {
-                            SetupTurn(false);
-                        }
-                    }
-                    Refresh();
                 }
                 else if (message.Type == "S")
                 {
@@ -242,20 +216,43 @@ namespace Battleship
                     {
                         MyBoard.SetGamePieceState(MyBoard.GetPieceAtIndex(target), 1);
                         SendHitMiss(target, false);
-                        if (IsHost)
-                        {
-                            SetupTurn(false);
-                        }
                     }
                     else if (MyBoard.GetGamePieceState(target) == 2) // Hit!
                     {
                         MyBoard.SetGamePieceState(MyBoard.GetPieceAtIndex(target), 3);
                         SendHitMiss(target, true);
+                    }
+                    Refresh();
+                }
+                else if (message.Type == "SR") //Shot Response
+                {
+                    string[] shot = message.Data.Split(';');
+                    Player P = Player.GetPlayerByAddress(shot[0]);
+                    int target = Convert.ToInt16(shot[1]);
+                    if (message.Sender != MyIPAddress)
+                        remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), "Shot fired on " + P.Name + "!", "CM");
+                    if (Convert.ToBoolean(shot[2]) == true)
+                    {
+                        remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), "It's a Hit","CM");
+
+                        P.gameBoard.SetGamePieceState(P.gameBoard.GetPieceAtIndex(target), 3);
+                        Shot thisShot = new Shot(CurrentPlayer, P, target, true);
                         if (IsHost)
                         {
                             SetupTurn(true);
                         }
                     }
+                    if (Convert.ToBoolean(shot[2]) == false)
+                    {
+                        remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), "It was a doozy", "CM");
+                        P.gameBoard.SetGamePieceState(P.gameBoard.GetPieceAtIndex(target), 1);
+                        Shot thisShot = new Shot(CurrentPlayer, P, target, false);
+                        if (IsHost)
+                        {
+                            SetupTurn(false);
+                        }
+                    }
+
                     Refresh();
                 }
                 else if (message.Type == "CT") //Response
@@ -266,12 +263,16 @@ namespace Battleship
                 }
                 else if (message.Type == "D") //Disconnect Message
                 {
-                    Console.WriteLine("{0} has disconnected.", remote.CList.GetClientByIP(message.Sender).NAME);
-                    remote.CList.Clients.Remove(remote.CList.GetClientByIP(message.Sender));
+                    Console.WriteLine("{0} has disconnected.", Player.GetPlayerByAddress(message.Sender).Name);
+                    Player.Playerlist.Remove(Player.GetPlayerByAddress(message.Sender));
                 }
                 else if (message.Type == "M") //Messages
                 {
                     DisplayConsoleMessage(message);
+                }
+                else if (message.Type == "CM") //Messages
+                {
+                    Console.WriteLine(message.Data);
                 }
                 else if (message.Type == "A") //Acknowledgement
                 {
@@ -283,9 +284,9 @@ namespace Battleship
                 
             }
             ContactList.Items.Clear();
-            foreach (string IP in remote.CList.GetAllClientIPs())
+            foreach (string IP in Player.GetAllPlayerIPsExcept(MyIPAddress))
             {
-                ContactList.Items.Add(remote.CList.GetClientByIP(IP).NAME + "@" + IP);
+                ContactList.Items.Add(Player.GetPlayerByAddress(IP).Name + "@" + IP);
             }
 
             
@@ -300,7 +301,7 @@ namespace Battleship
         }
         private void DisplayConsoleMessage(tcpNetwork.Message M)
         {
-            AppendConsoleText(remote.CList.GetClientByMessage(M).NAME + "@" + remote.CList.GetClientByMessage(M).IP + ": " + M.Data);
+            AppendConsoleText(Player.GetPlayerByAddress(M.Sender).Name + ": " + M.Data);
         }
 
         /*******************
@@ -366,23 +367,23 @@ namespace Battleship
 
         public void SetupGame()
         {
-            ColorQueue.Enqueue(Color.FromArgb(150, Color.Red));
-            ColorQueue.Enqueue(Color.FromArgb(150, Color.Orange));
-            ColorQueue.Enqueue(Color.FromArgb(150, Color.Yellow));
-            ColorQueue.Enqueue(Color.FromArgb(150, Color.Green));
-            ColorQueue.Enqueue(Color.FromArgb(150, Color.Blue));
-            ColorQueue.Enqueue(Color.FromArgb(150, Color.Indigo));
-            ColorQueue.Enqueue(Color.FromArgb(150, Color.Violet));
+            ColorQueue.Enqueue(Color.FromArgb(75, Color.Aqua));
+            ColorQueue.Enqueue(Color.FromArgb(75, Color.Orange));
+            ColorQueue.Enqueue(Color.FromArgb(75, Color.Yellow));
+            ColorQueue.Enqueue(Color.FromArgb(75, Color.Green));
+            ColorQueue.Enqueue(Color.FromArgb(75, Color.Red));
+            ColorQueue.Enqueue(Color.FromArgb(75, Color.Indigo));
+            ColorQueue.Enqueue(Color.FromArgb(75, Color.Violet));
 
             //Initiate My game Board
             MyBoard = new Gameboard(MyIPAddress,GetNewBoardColor());
+            MyPlayer.gameBoard = MyBoard;
             MyBoard.MoveTo(20,20, 3F);
             ShipSetupQueue.Enqueue(4);
             ShipSetupQueue.Enqueue(3);
             ShipSetupQueue.Enqueue(2);
             ShipSetupQueue.Enqueue(2);
             ShipSetupQueue.Enqueue(1);
-            remote.CList.AddNewClient(MyIPAddress, HostName);
 
             //Add Players
             Player.LocationScales.Add(new PointF(20, 20), 3F);   //Player1
@@ -391,16 +392,10 @@ namespace Battleship
             Player.LocationScales.Add(new PointF(460, 330), 1F); //mini
             Player.LocationScales.Add(new PointF(565, 330), 1F); //mini
 
-            Player MyPlayer = Player.AddPlayer(MyIPAddress, HostName);
-            MyPlayer.gameBoard = MyBoard;
             //Add Locations
             Player.PlayerLocations.Add(MyPlayer, MyBoard.origin);
 
-            if (IsHost)
-            {
-                remote.CList.AddNewClient(MyIPAddress, HostName);
-            }
-            else
+            if (!(IsHost))
             {
                 SendIntroduction(JoinIP);
             }
@@ -433,9 +428,9 @@ namespace Battleship
                 //undo previous
                 foreach (Gameboard.GamePiece G in MyBoard.pieces)
                 {
-                    if (G.state == 1)
+                    if (G.drawState == 4)
                     {
-                        G.state = 0;
+                        G.drawState = 0;
                     }
                 }
                 if (ShipList == null)
@@ -448,7 +443,7 @@ namespace Battleship
                     //Check for collisions
                     foreach (Gameboard.GamePiece G in ShipList)
                     {
-                        if (G.state != 0)
+                        if (G.drawState != 0)
                         {
                             Console.WriteLine("Ship cannot be placed here");
                             return 1;
@@ -457,7 +452,7 @@ namespace Battleship
                     //Highlight new
                     foreach (Gameboard.GamePiece G in ShipList)
                     {
-                        G.state = 1;
+                        G.drawState = 4;
                         MyBoard.needsRedraw = true;
                     }
                 }
@@ -472,11 +467,14 @@ namespace Battleship
             {
                 foreach (Gameboard.GamePiece G in MyBoard.pieces)
                 {
-                    if (G.state == 1)
+                    if (G.drawState == 4)
                     {
-                        G.state = 2;
+                        G.drawState = 2;
+                        G.pieceDirection = shipRotation;
                     }
                 }
+
+
                 SetCursorRectangle();
                 ShipSetupQueue.Dequeue();
                 Refresh();
@@ -491,7 +489,7 @@ namespace Battleship
                     if (IsHost)
                     {
                         CheckReadyTimer.Start();
-                        remote.CList.GetClientByIP(MyIPAddress).ClientAttr[0] = true;
+                        Player.GetPlayerByAddress(MyIPAddress).ReadyToPlay = true;
                     }
                     RotateShip.Hide();
                     ConfirmShip.Hide();
@@ -517,28 +515,28 @@ namespace Battleship
         {
             if (IsHost)
             {
-                if (remote.CList.GetAllClientIPs().Count > 0)
+                if (Player.GetAllPlayerIPsExcept(MyIPAddress).Count > 0)
                 {
-                    if (remote.CList.GetAllClientIPsByAttr(false, 0).Count == 0)
+                    if (Player.IsEveryoneReadyToPlay())
                     {
                         CheckReadyTimer.Stop();
                         gamePart += 1;
-                        remote.SendData(remote.CList.GetAllClientIPs(), "Players are Ready. Game starting.", "M");
+                        remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), "Players are Ready. Game starting.", "CM");
                         Console.WriteLine("Players are Ready. Game starting.");
-                        remote.SendData(remote.CList.GetAllClientIPs(), "GAME START", "GS");
+                        remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), "GAME START", "GS");
 
                         //Set Play Order:
                         Console.Write("The Play order is: ");
                         string PlayOrderMessage = "The Play order is: ";
-                        foreach (tcpNetwork.Client C in remote.CList)
+                        foreach (Player P in Player.Playerlist)
                         {
-                            PlayerOrder.Enqueue(C.IP); // Play order
-                            Console.Write(" => {0}", C.NAME);
-                            PlayOrderMessage += " => " + C.NAME;
+                            PlayerOrder.Enqueue(P.address); // Play order
+                            Console.Write(" => {0}", P.Name);
+                            PlayOrderMessage += " => " + P.Name;
                         }
                         Console.WriteLine("");
                         //send order message queue
-                        remote.SendData(remote.CList.GetAllClientIPs(), PlayOrderMessage, "M");
+                        remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), PlayOrderMessage, "CM");
                     }
                     else
                     {
@@ -546,9 +544,9 @@ namespace Battleship
                         if (firstReady == 0)
                         {
                             Console.Write("Waiting on:");
-                            foreach (string IP in remote.CList.GetAllClientIPsByAttr(false, 0))
+                            foreach (string IP in Player.GetAllPlayerIPsExcept(MyIPAddress))
                             {
-                                Console.Write(" {0},", remote.CList.GetClientByIP(IP).NAME);
+                                Console.Write(" {0},", Player.GetPlayerByAddress(IP).Name);
                             }
                             Console.Write(" To start the game.");
                             Console.WriteLine("");
@@ -570,16 +568,15 @@ namespace Battleship
         private void CreateEnemyGrids()
         {
 
-            foreach(tcpNetwork.Client C in remote.CList)
+            foreach(Player P in Player.Playerlist)
             {
-                if (C.IP == MyIPAddress)
+                if (P.address == MyIPAddress)
                 {
                     continue;
                 }
-
-                Player NewPlayer = Player.AddPlayer(C.IP, C.NAME);
-                Gameboard newBoard = new Gameboard(C.IP, GetNewBoardColor());
-                NewPlayer.gameBoard = newBoard;
+                
+                Gameboard newBoard = new Gameboard(P.address, GetNewBoardColor());
+                P.gameBoard = newBoard;
                 
             }
             foreach (Player P in Player.GetAllPlayersExcept(MyIPAddress))
@@ -597,6 +594,22 @@ namespace Battleship
 
         public void SetupTurn(bool SamePlayer)
         {
+            //CheckForLoser
+            //Player Loser = Player.CheckLosers();
+            //if (Loser != null)
+            //{
+            //    remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), Loser.Name + " has fallen!", "M");
+            //    Console.WriteLine(Loser.Name + " has fallen!");
+            //}
+            //if (Player.Playerlist.Where(p => p.Loser == false).Count() == 1)
+            //{
+            //    Player winner = Player.Playerlist.Where(p => p.Loser == false).First();
+            //    remote.SendData(Player.GetAllPlayerIPsExcept(MyIPAddress), winner.Name + " has Won! The game will go on because I haven't programmed this part yet!", "M");
+            //    Console.WriteLine(winner.Name + " has Won! The game will go on because I haven't programmed this part yet!");
+            //    gamePart = 7;
+            //    return;
+            //}
+
             if (IsHost)
             {
                 if (!(SamePlayer))
@@ -604,22 +617,29 @@ namespace Battleship
                     CurrentPlayer = GetNextPlayer();
                 }
                 SendChangeTurn(CurrentPlayer);
-                AnnounceNextPlayer(CurrentPlayer);
             }
+            StatusLight.Show();
             gamePart = 6;
             PlayGame();
         }
 
+        private void FinishGame()
+        {
+            throw new NotImplementedException();
+        }
 
         public void AnnounceNextPlayer(Player P)
         {
             if (P.address == MyIPAddress)
             {
                 Console.WriteLine("Your Shot {0}! Choose a game board and square!", P.Name);
+                StatusLight.Image = Bship2.Properties.Resources.Light_Green;
+                Ammo = 1;
             }
             else
             {
                 Console.WriteLine("{0}'s Turn.. Good Luck!", P.Name);
+                StatusLight.Image = Bship2.Properties.Resources.Light_Red;
             }
             Refresh();
         }
@@ -721,7 +741,7 @@ namespace Battleship
             }
             else // take shot
             {
-                if (CurrentPlayer.address == MyIPAddress) //If It's my turn
+                if (CurrentPlayer.address == MyIPAddress && Ammo > 0) //If It's my turn
                 {
                     int target = GetPieceAtCursor(); //Get Piece
                     if (target != -1) //If you clicked a board
@@ -732,6 +752,7 @@ namespace Battleship
                             {
                                 if (P.gameBoard.GetGamePieceState(target) == 0)//And if That piece has not already been fired upon
                                 {
+                                    Ammo -= 1;
                                     SendShot(P, target); // send a shot
                                 }
                             }

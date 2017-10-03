@@ -17,6 +17,10 @@ namespace Battleship
         private float _scale;
         private PointF _newOrigin { get; set; }
         private float _newScale { get; set; }
+        SolidBrush BackgroundBrush;
+        SolidBrush TileBrush;
+        SolidBrush FontBrush;
+        Pen outline;
 
         public List<GamePiece> pieces;
         public RectangleF[] rectPieces = new RectangleF[100];
@@ -65,18 +69,22 @@ namespace Battleship
             this.origin = new PointF(20,20);
             this.needsRedraw = true;
             this.backColor = backColor;
+            BackgroundBrush = new SolidBrush(this.backColor);
+            TileBrush = new SolidBrush(this.backColor);
+            FontBrush = new SolidBrush(Color.White);
+            outline = new Pen(Color.FromArgb(255, 30, 30, 30), 2);
 
             this.stateColors.Add(backColor);
-            this.stateColors.Add(Color.White);
+            this.stateColors.Add(Color.FromArgb(150,Color.Black));
             this.stateColors.Add(Color.Gray);
             this.stateColors.Add(Color.DarkRed);
-            this.stateColors.Add(Color.Black);
+            this.stateColors.Add(Color.White);
 
             for (int i = 0; i < 101; i++)
             {
                 pieces.Add(new GamePiece(i));
-                pieces[i].state = 0;
-                pieces[i].drawstate = 0;
+                pieces[i].drawState = 0;
+                pieces[i].boardPiece = 0;
             }
             rectRedraw(this.origin, this.scale);
 
@@ -103,26 +111,26 @@ namespace Battleship
 
         public Color GetGamePieceColor(int index)
         {
-            return stateColors[GetPieceAtIndex(index).state];
+            return stateColors[GetPieceAtIndex(index).drawState];
         }
 
         public int GetGamePieceState(int index)
         {
-            return GetPieceAtIndex(index).state;
+            return GetPieceAtIndex(index).drawState;
         }
 
         public void SetGamePieceState(List<GamePiece> GPList, int state)
         {
             foreach (GamePiece GP in GPList)
             {
-                GP.state = state;
+                GP.drawState = state;
             }
         }
 
 
         public void SetGamePieceState(GamePiece GP, int state)
         {
-            GP.state = state;
+            GP.drawState = state;
         }
 
         public List<GamePiece> Get_AbovePieces(GamePiece G, int dist)
@@ -210,8 +218,9 @@ namespace Battleship
         public class GamePiece
         {
             public int idex { get; }
-            public int state { get; set; }
-            public int drawstate { get; set; }
+            public int drawState { get; set; }
+            public int boardPiece { get; set; }
+            public int pieceDirection { get; set; }
             public GamePiece(int idex)
             {
                 this.idex = idex;
@@ -228,12 +237,8 @@ namespace Battleship
             //set clipping region to bounds
             //g.Clip = r;
 
-            SolidBrush brush = new SolidBrush(backColor);
-            SolidBrush FontBrush = new SolidBrush(Color.White);
-            Pen outline = new Pen(Color.Black);
-
             //Draw base color
-            g.FillRectangle(brush, currentArea);
+            g.FillRectangle(BackgroundBrush, currentArea);
             //Draw Specific states
             for (int i = 1; i <= 100; i++)
             {
@@ -241,8 +246,8 @@ namespace Battleship
                 if (GetGamePieceState(i) != 0)
                 {
                     Color fillColor = this.GetGamePieceColor(i);
-                    brush.Color = fillColor;
-                    g.FillRectangle(brush, rectPieces[i - 1]);
+                    TileBrush.Color = fillColor;
+                    g.FillRectangle(TileBrush, rectPieces[i - 1]);
                 }
 
             }
@@ -253,8 +258,8 @@ namespace Battleship
             {
                 g.DrawLine(outline, rectPieces[i - 1].Location, new PointF(rectPieces[i - 1].X, (rectPieces[i - 1].Y + currentArea.Width)));
                 g.DrawLine(outline, rectPieces[(i - 1)*10].Location, new PointF((rectPieces[(i - 1) * 10].X + currentArea.Width), rectPieces[(i - 1) * 10].Y));
-                g.DrawString(H_Labels[i - 1], new Font("Consolas", scale * 4), FontBrush, new PointF(rectPieces[i - 1].X + (scale*(5F/3F)), currentArea.Y - (scale*7)));
-                g.DrawString(V_Labels[i - 1], new Font("Consolas", scale * 4), FontBrush, new PointF(currentArea.X - (scale * 7), rectPieces[(i - 1) * 10].Y + (scale * (5F / 3F))));
+                g.DrawString(H_Labels[i - 1], new Font("Consolas", scale * 4,FontStyle.Bold), FontBrush, new PointF(rectPieces[i - 1].X + (scale*(5F/3F)), currentArea.Y - (scale*7)));
+                g.DrawString(V_Labels[i - 1], new Font("Consolas", scale * 4, FontStyle.Bold), FontBrush, new PointF(currentArea.X - (scale * 7), rectPieces[(i - 1) * 10].Y + (scale * (5F / 3F))));
             }
 
             //Update Scale and Origin

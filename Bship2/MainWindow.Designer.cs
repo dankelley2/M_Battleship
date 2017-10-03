@@ -41,10 +41,12 @@
             this.label2 = new System.Windows.Forms.Label();
             this.RotateShip = new System.Windows.Forms.Button();
             this.ConfirmShip = new System.Windows.Forms.Button();
+            this.StatusLight = new System.Windows.Forms.PictureBox();
             this.ChatPanel.SuspendLayout();
             this.ChatConsolePanel.SuspendLayout();
             this.ChatContactsPanel.SuspendLayout();
             this.ChatButtonPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.StatusLight)).BeginInit();
             this.SuspendLayout();
             // 
             // txtConsole
@@ -183,6 +185,18 @@
             this.ConfirmShip.UseVisualStyleBackColor = true;
             this.ConfirmShip.Click += new System.EventHandler(this.ConfirmShip_Click);
             // 
+            // StatusLight
+            // 
+            this.StatusLight.BackColor = System.Drawing.Color.Transparent;
+            this.StatusLight.Image = global::Bship2.Properties.Resources.Light_Red;
+            this.StatusLight.Location = new System.Drawing.Point(12, 381);
+            this.StatusLight.Name = "StatusLight";
+            this.StatusLight.Size = new System.Drawing.Size(59, 51);
+            this.StatusLight.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.StatusLight.TabIndex = 12;
+            this.StatusLight.TabStop = false;
+            this.StatusLight.Visible = false;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -191,6 +205,7 @@
             this.BackColor = System.Drawing.SystemColors.Control;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.ClientSize = new System.Drawing.Size(694, 582);
+            this.Controls.Add(this.StatusLight);
             this.Controls.Add(this.ConfirmShip);
             this.Controls.Add(this.RotateShip);
             this.Controls.Add(this.ChatPanel);
@@ -216,6 +231,7 @@
             this.ChatContactsPanel.ResumeLayout(false);
             this.ChatButtonPanel.ResumeLayout(false);
             this.ChatButtonPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.StatusLight)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -233,6 +249,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button RotateShip;
         private System.Windows.Forms.Button ConfirmShip;
+        private System.Windows.Forms.PictureBox StatusLight;
     }
 }
 
