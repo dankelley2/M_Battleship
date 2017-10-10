@@ -16,5 +16,7 @@ namespace Battleship
             Drawable.Add(this);
         }
     }
-    
-}
+
+
+
+    }

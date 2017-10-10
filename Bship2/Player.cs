@@ -4,20 +4,19 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Battleship
 {
     public class Player
     {
         public static List<Player> Playerlist = new List<Player>();
-        public static Dictionary<Player, PointF> PlayerLocations = 
-            new Dictionary<Player, PointF>();
-        public static Dictionary<PointF, float> LocationScales = 
-            new Dictionary<PointF, float>();
-        public List<Data.Shot> shots = new List<Data.Shot>();
+        public List<Shot> shots = new List<Shot>();
         public string address { get; }
         public string Name { get; }
         public int Id;
+        public bool Loser = false;
+        public bool ReadyToPlay = false;
         public Gameboard gameBoard { get; set; }
 
         public Player(string address, string name)
@@ -26,13 +25,6 @@ namespace Battleship
             this.Name = name;
             Playerlist.Add(this);
             Id = Playerlist.Count;
-            switch (Id)
-            {
-                case 2: { Player.PlayerLocations.Add(this, new PointF(370, 20)); break; }
-                case 3: { Player.PlayerLocations.Add(this, new PointF(355, 330)); break; }
-                case 4: { Player.PlayerLocations.Add(this, new PointF(460, 330)); break; }
-                case 5: { Player.PlayerLocations.Add(this, new PointF(465, 330)); break; }
-            }
         }
 
         public static Player GetPlayerByAddress(string address)
@@ -49,14 +41,11 @@ namespace Battleship
 
         public static void MakeActiveBoard(Player P)
         {
-            PointF OldLocation = Player.PlayerLocations[P];
-            Player OldActivePlayer = Player.PlayerLocations.FirstOrDefault(x => (new PointF(370, 20).Equals(x.Value))).Key;
-            Player.PlayerLocations.Remove(P);
-            Player.PlayerLocations.Remove(OldActivePlayer);
-            Player.PlayerLocations.Add(OldActivePlayer, OldLocation);
-            Player.PlayerLocations.Add(P, new PointF(370, 20));
-            P.gameBoard.MoveTo(Player.PlayerLocations[P], Player.LocationScales[Player.PlayerLocations[P]]);
-            OldActivePlayer.gameBoard.MoveTo(Player.PlayerLocations[OldActivePlayer], Player.LocationScales[Player.PlayerLocations[OldActivePlayer]]);
+            PointF OldLocation = P.gameBoard.origin;
+            float OldScale = P.gameBoard.scale;
+            Player OldActivePlayer = Player.GetPlayerByPanel(MainWindow.PlayerLocations[1]);
+            P.gameBoard.MoveTo(MainWindow.PlayerLocations[1].Location, 3);
+            OldActivePlayer.gameBoard.MoveTo(OldLocation,OldScale);
         }
 
         public static Player AddPlayer(string address, string name)
@@ -68,6 +57,66 @@ namespace Battleship
         public static IEnumerable<Player> GetAllPlayersExcept(string IP)
         {
             return Playerlist.Where(s => s.address != IP);
+        }
+
+        public static List<string> GetAllPlayerIPs()
+        {
+            return Playerlist.Select(s => s.address).ToList();
+        }
+
+        public static List<string> GetAllPlayerIPsExcept(string IP)
+        {
+            return Playerlist.Select(s => s.address)
+                .Where(s => s != IP).ToList();
+        }
+
+        public static Player CheckLosers()
+        {
+            foreach (Player P in Playerlist)
+            {
+                int CountShipPieces = 0;
+                foreach (Gameboard.GamePiece G in P.gameBoard.pieces)
+                {
+                    if (G.drawState == 2)
+                    {
+                        CountShipPieces++;
+                    }
+                }
+                if (CountShipPieces == 0)
+                {
+                    P.Loser = true;
+                    return P;
+                }
+            }
+            return null;
+        }
+
+        public static Player GetPlayerByPanel(Panel P)
+        {
+            foreach (Player player in Player.Playerlist)
+            {
+                if (Point.Round(player.gameBoard.origin).Equals(P.Location))
+                return player;
+            }
+            return null;
+        }
+
+        public static bool IsEveryoneReadyToPlay()
+        {
+            foreach (Player P in Playerlist)
+            {
+                if (P.ReadyToPlay == false)
+                    return false;
+            }
+            return true;
+        }
+
+        public bool Equals(Player P2)
+        {
+            if (this.address == P2.address)
+                return true;
+            else
+                return false;
         }
     }
 }

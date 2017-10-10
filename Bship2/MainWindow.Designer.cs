@@ -41,10 +41,19 @@
             this.label2 = new System.Windows.Forms.Label();
             this.RotateShip = new System.Windows.Forms.Button();
             this.ConfirmShip = new System.Windows.Forms.Button();
+            this.StatusLight = new System.Windows.Forms.PictureBox();
+            this.Player1Panel = new System.Windows.Forms.Panel();
+            this.Player2Panel = new System.Windows.Forms.Panel();
+            this.Player1Ships = new System.Windows.Forms.Panel();
+            this.Player2Ships = new System.Windows.Forms.Panel();
+            this.Player3Panel = new System.Windows.Forms.Panel();
+            this.Player4Panel = new System.Windows.Forms.Panel();
+            this.Player5Panel = new System.Windows.Forms.Panel();
             this.ChatPanel.SuspendLayout();
             this.ChatConsolePanel.SuspendLayout();
             this.ChatContactsPanel.SuspendLayout();
             this.ChatButtonPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.StatusLight)).BeginInit();
             this.SuspendLayout();
             // 
             // txtConsole
@@ -58,7 +67,7 @@
             this.txtConsole.Name = "txtConsole";
             this.txtConsole.ReadOnly = true;
             this.txtConsole.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtConsole.Size = new System.Drawing.Size(533, 130);
+            this.txtConsole.Size = new System.Drawing.Size(723, 130);
             this.txtConsole.TabIndex = 2;
             // 
             // txtMsg
@@ -67,7 +76,7 @@
             this.txtMsg.Location = new System.Drawing.Point(119, 0);
             this.txtMsg.MaxLength = 2000;
             this.txtMsg.Name = "txtMsg";
-            this.txtMsg.Size = new System.Drawing.Size(414, 20);
+            this.txtMsg.Size = new System.Drawing.Size(604, 20);
             this.txtMsg.TabIndex = 3;
             this.txtMsg.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtMsg_KeyDown);
             // 
@@ -101,9 +110,9 @@
             this.ChatPanel.Controls.Add(this.ChatContactsPanel);
             this.ChatPanel.Controls.Add(this.ChatButtonPanel);
             this.ChatPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.ChatPanel.Location = new System.Drawing.Point(0, 432);
+            this.ChatPanel.Location = new System.Drawing.Point(0, 512);
             this.ChatPanel.Name = "ChatPanel";
-            this.ChatPanel.Size = new System.Drawing.Size(694, 150);
+            this.ChatPanel.Size = new System.Drawing.Size(884, 150);
             this.ChatPanel.TabIndex = 9;
             // 
             // ChatConsolePanel
@@ -112,7 +121,7 @@
             this.ChatConsolePanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ChatConsolePanel.Location = new System.Drawing.Point(0, 20);
             this.ChatConsolePanel.Name = "ChatConsolePanel";
-            this.ChatConsolePanel.Size = new System.Drawing.Size(533, 130);
+            this.ChatConsolePanel.Size = new System.Drawing.Size(723, 130);
             this.ChatConsolePanel.TabIndex = 11;
             // 
             // ChatContactsPanel
@@ -120,7 +129,7 @@
             this.ChatContactsPanel.Controls.Add(this.ContactList);
             this.ChatContactsPanel.Controls.Add(this.label1);
             this.ChatContactsPanel.Dock = System.Windows.Forms.DockStyle.Right;
-            this.ChatContactsPanel.Location = new System.Drawing.Point(533, 20);
+            this.ChatContactsPanel.Location = new System.Drawing.Point(723, 20);
             this.ChatContactsPanel.Name = "ChatContactsPanel";
             this.ChatContactsPanel.Size = new System.Drawing.Size(161, 130);
             this.ChatContactsPanel.TabIndex = 10;
@@ -133,7 +142,7 @@
             this.ChatButtonPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.ChatButtonPanel.Location = new System.Drawing.Point(0, 0);
             this.ChatButtonPanel.Name = "ChatButtonPanel";
-            this.ChatButtonPanel.Size = new System.Drawing.Size(694, 20);
+            this.ChatButtonPanel.Size = new System.Drawing.Size(884, 20);
             this.ChatButtonPanel.TabIndex = 3;
             // 
             // sendBtn
@@ -141,7 +150,7 @@
             this.sendBtn.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.sendBtn.Dock = System.Windows.Forms.DockStyle.Right;
             this.sendBtn.Font = new System.Drawing.Font("Consolas", 8F);
-            this.sendBtn.Location = new System.Drawing.Point(533, 0);
+            this.sendBtn.Location = new System.Drawing.Point(723, 0);
             this.sendBtn.Name = "sendBtn";
             this.sendBtn.Size = new System.Drawing.Size(161, 20);
             this.sendBtn.TabIndex = 0;
@@ -165,7 +174,7 @@
             // 
             this.RotateShip.BackgroundImage = global::Bship2.Properties.Resources.rotate;
             this.RotateShip.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.RotateShip.Location = new System.Drawing.Point(80, 330);
+            this.RotateShip.Location = new System.Drawing.Point(93, 352);
             this.RotateShip.Name = "RotateShip";
             this.RotateShip.Size = new System.Drawing.Size(60, 60);
             this.RotateShip.TabIndex = 10;
@@ -176,31 +185,107 @@
             // 
             this.ConfirmShip.BackgroundImage = global::Bship2.Properties.Resources.Confirm;
             this.ConfirmShip.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.ConfirmShip.Location = new System.Drawing.Point(200, 330);
+            this.ConfirmShip.Location = new System.Drawing.Point(213, 352);
             this.ConfirmShip.Name = "ConfirmShip";
             this.ConfirmShip.Size = new System.Drawing.Size(60, 60);
             this.ConfirmShip.TabIndex = 11;
             this.ConfirmShip.UseVisualStyleBackColor = true;
             this.ConfirmShip.Click += new System.EventHandler(this.ConfirmShip_Click);
             // 
+            // StatusLight
+            // 
+            this.StatusLight.BackColor = System.Drawing.Color.Transparent;
+            this.StatusLight.Image = global::Bship2.Properties.Resources.Light_Red;
+            this.StatusLight.Location = new System.Drawing.Point(12, 446);
+            this.StatusLight.Name = "StatusLight";
+            this.StatusLight.Size = new System.Drawing.Size(74, 66);
+            this.StatusLight.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.StatusLight.TabIndex = 12;
+            this.StatusLight.TabStop = false;
+            this.StatusLight.Visible = false;
+            // 
+            // Player1Panel
+            // 
+            this.Player1Panel.Location = new System.Drawing.Point(30, 30);
+            this.Player1Panel.Name = "Player1Panel";
+            this.Player1Panel.Size = new System.Drawing.Size(300, 300);
+            this.Player1Panel.TabIndex = 13;
+            this.Player1Panel.Visible = false;
+            // 
+            // Player2Panel
+            // 
+            this.Player2Panel.Location = new System.Drawing.Point(545, 30);
+            this.Player2Panel.Name = "Player2Panel";
+            this.Player2Panel.Size = new System.Drawing.Size(300, 300);
+            this.Player2Panel.TabIndex = 14;
+            this.Player2Panel.Visible = false;
+            // 
+            // Player1Ships
+            // 
+            this.Player1Ships.Location = new System.Drawing.Point(337, 30);
+            this.Player1Ships.Name = "Player1Ships";
+            this.Player1Ships.Size = new System.Drawing.Size(150, 150);
+            this.Player1Ships.TabIndex = 15;
+            this.Player1Ships.Visible = false;
+            // 
+            // Player2Ships
+            // 
+            this.Player2Ships.Location = new System.Drawing.Point(388, 180);
+            this.Player2Ships.Name = "Player2Ships";
+            this.Player2Ships.Size = new System.Drawing.Size(150, 150);
+            this.Player2Ships.TabIndex = 16;
+            this.Player2Ships.Visible = false;
+            // 
+            // Player3Panel
+            // 
+            this.Player3Panel.Location = new System.Drawing.Point(417, 376);
+            this.Player3Panel.Name = "Player3Panel";
+            this.Player3Panel.Size = new System.Drawing.Size(116, 116);
+            this.Player3Panel.TabIndex = 15;
+            this.Player3Panel.Visible = false;
+            // 
+            // Player4Panel
+            // 
+            this.Player4Panel.Location = new System.Drawing.Point(575, 376);
+            this.Player4Panel.Name = "Player4Panel";
+            this.Player4Panel.Size = new System.Drawing.Size(116, 116);
+            this.Player4Panel.TabIndex = 16;
+            this.Player4Panel.Visible = false;
+            // 
+            // Player5Panel
+            // 
+            this.Player5Panel.Location = new System.Drawing.Point(733, 376);
+            this.Player5Panel.Name = "Player5Panel";
+            this.Player5Panel.Size = new System.Drawing.Size(116, 116);
+            this.Player5Panel.TabIndex = 17;
+            this.Player5Panel.Visible = false;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.BackColor = System.Drawing.SystemColors.Control;
+            this.BackColor = System.Drawing.SystemColors.Menu;
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
-            this.ClientSize = new System.Drawing.Size(694, 582);
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.ClientSize = new System.Drawing.Size(884, 662);
+            this.Controls.Add(this.Player5Panel);
+            this.Controls.Add(this.Player4Panel);
+            this.Controls.Add(this.Player3Panel);
+            this.Controls.Add(this.Player2Ships);
+            this.Controls.Add(this.Player1Ships);
+            this.Controls.Add(this.Player2Panel);
+            this.Controls.Add(this.Player1Panel);
+            this.Controls.Add(this.StatusLight);
             this.Controls.Add(this.ConfirmShip);
             this.Controls.Add(this.RotateShip);
             this.Controls.Add(this.ChatPanel);
             this.Cursor = System.Windows.Forms.Cursors.Cross;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
             this.MaximizeBox = false;
-            this.MaximumSize = new System.Drawing.Size(710, 620);
-            this.MinimumSize = new System.Drawing.Size(710, 620);
+            this.MaximumSize = new System.Drawing.Size(900, 700);
+            this.MinimumSize = new System.Drawing.Size(900, 700);
             this.Name = "MainWindow";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MainWindow";
@@ -216,6 +301,7 @@
             this.ChatContactsPanel.ResumeLayout(false);
             this.ChatButtonPanel.ResumeLayout(false);
             this.ChatButtonPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.StatusLight)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -233,6 +319,14 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button RotateShip;
         private System.Windows.Forms.Button ConfirmShip;
+        private System.Windows.Forms.PictureBox StatusLight;
+        private System.Windows.Forms.Panel Player1Panel;
+        private System.Windows.Forms.Panel Player2Panel;
+        private System.Windows.Forms.Panel Player1Ships;
+        private System.Windows.Forms.Panel Player2Ships;
+        private System.Windows.Forms.Panel Player3Panel;
+        private System.Windows.Forms.Panel Player4Panel;
+        private System.Windows.Forms.Panel Player5Panel;
     }
 }
 
